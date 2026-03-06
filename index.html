@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Climate Attribution Quiz</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0f172a;
+      color: #f1f5f9;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .screen { display: none; }
+    .screen.active { display: flex; flex-direction: column; align-items: center; }
+
+    /* ── Start screen ── */
+    #start-screen {
+      text-align: center;
+      max-width: 560px;
+      gap: 1.5rem;
+    }
+    #start-screen h1 {
+      font-size: clamp(1.6rem, 5vw, 2.4rem);
+      font-weight: 800;
+      background: linear-gradient(135deg, #38bdf8, #6ee7b7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1.2;
+    }
+    #start-screen p {
+      color: #94a3b8;
+      font-size: 1rem;
+      line-height: 1.7;
+    }
+    #start-screen .hint {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 0.75rem;
+      padding: 0.9rem 1.2rem;
+      color: #fcd34d;
+      font-size: 0.875rem;
+      line-height: 1.6;
+    }
+
+    /* ── Quiz screen ── */
+    #quiz-screen {
+      width: 100%;
+      max-width: 700px;
+      gap: 1.25rem;
+    }
+
+    .top-bar {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.875rem;
+      color: #94a3b8;
+    }
+    .score-badge {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 999px;
+      padding: 0.3rem 0.9rem;
+      font-weight: 600;
+      color: #38bdf8;
+    }
+
+    .progress-bar-wrap {
+      width: 100%;
+      height: 5px;
+      background: #1e293b;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #38bdf8, #6ee7b7);
+      border-radius: 999px;
+      transition: width 0.4s ease;
+    }
+
+    .card {
+      width: 100%;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 1.25rem;
+      overflow: hidden;
+    }
+
+    .image-wrap {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: #0f172a;
+      position: relative;
+    }
+    .image-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .description {
+      padding: 0.75rem 1.5rem 0;
+      font-size: 0.875rem;
+      color: #94a3b8;
+      font-style: italic;
+    }
+
+    .question {
+      padding: 0.75rem 1.5rem 0.5rem;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+
+    .answer-row {
+      display: flex;
+      gap: 0.75rem;
+      padding: 0.75rem 1.5rem 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .answer-row button {
+      flex: 1;
+      min-width: 80px;
+      padding: 0.75rem 1rem;
+      border: 2px solid transparent;
+      border-radius: 0.75rem;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    }
+    .answer-row button:active { transform: scale(0.97); }
+
+    .btn-yes   { background: #134e4a; color: #6ee7b7; border-color: #0f766e; }
+    .btn-no    { background: #4c0519; color: #fda4af; border-color: #9f1239; }
+    .btn-maybe { background: #1c1917; color: #fcd34d; border-color: #78350f; }
+
+    .btn-yes:hover   { background: #0f766e; }
+    .btn-no:hover    { background: #9f1239; }
+    .btn-maybe:hover { background: #78350f; }
+
+    /* feedback states */
+    .btn-correct { background: #166534 !important; border-color: #22c55e !important; color: #bbf7d0 !important; }
+    .btn-wrong   { background: #7f1d1d !important; border-color: #ef4444 !important; color: #fee2e2 !important; }
+    .btn-reveal  { background: #1a2e05 !important; border-color: #84cc16 !important; color: #d9f99d !important; }
+    .answer-row button:disabled { cursor: default; opacity: 0.85; }
+
+    .feedback-msg {
+      padding: 0 1.5rem 1.25rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      min-height: 1.5rem;
+      color: #94a3b8;
+    }
+    .feedback-msg.correct { color: #4ade80; }
+    .feedback-msg.wrong   { color: #f87171; }
+
+    .next-btn {
+      align-self: flex-end;
+      padding: 0.65rem 1.75rem;
+      background: linear-gradient(135deg, #0284c7, #059669);
+      color: #fff;
+      border: none;
+      border-radius: 0.75rem;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .next-btn:hover { opacity: 0.9; }
+    .next-btn:active { transform: scale(0.97); }
+    .next-btn:disabled { opacity: 0.3; cursor: default; }
+
+    /* ── Results screen ── */
+    #results-screen {
+      text-align: center;
+      max-width: 480px;
+      gap: 1.5rem;
+    }
+    .result-circle {
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      background: conic-gradient(#38bdf8 var(--pct), #1e293b 0);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .result-circle::before {
+      content: '';
+      width: 100px;
+      height: 100px;
+      background: #0f172a;
+      border-radius: 50%;
+      position: absolute;
+    }
+    .result-circle span {
+      position: relative;
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #38bdf8;
+    }
+    #results-screen h2 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #f1f5f9;
+    }
+    #result-msg {
+      color: #94a3b8;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    /* ── Top banner ── */
+    .top-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: linear-gradient(135deg, #0284c7, #059669);
+      color: #fff;
+      text-align: center;
+      padding: 0.65rem 1rem;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      z-index: 100;
+    }
+
+    body { padding-top: 3rem; }
+
+    /* shared button */
+    .primary-btn {
+      padding: 0.8rem 2rem;
+      background: linear-gradient(135deg, #0284c7, #059669);
+      color: #fff;
+      border: none;
+      border-radius: 0.75rem;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .primary-btn:hover { opacity: 0.9; }
+    .primary-btn:active { transform: scale(0.97); }
+  </style>
+</head>
+<body>
+
+<div class="top-banner">Climate Change Attribution Quiz</div>
+
+<!-- Start Screen -->
+<div id="start-screen" class="screen active">
+  <h1>Climate Attribution Quiz</h1>
+  <p>We will show ten photos of environmental impacts. Take this quiz to see whether you can identify if the cause is climate change!</p>
+  <div class="hint">Sometimes, more than one answer can be correct — you get a point if you pick either one.</div>
+  <button class="primary-btn" onclick="startQuiz()">Start Quiz</button>
+</div>
+
+<!-- Quiz Screen -->
+<div id="quiz-screen" class="screen">
+  <div class="top-bar">
+    <span id="question-counter">Question 1 / 10</span>
+    <span class="score-badge">Score: <span id="score-display">0</span></span>
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+  </div>
+  <div class="card">
+    <div class="image-wrap">
+      <img id="quiz-image" src="" alt="Environmental impact photo" />
+    </div>
+    <div class="description" id="description"></div>
+    <div class="question">Is this environmental impact caused by Climate Change?</div>
+    <div class="answer-row">
+      <button class="btn-yes"   data-value="yes"   onclick="answer('yes')"  >Yes</button>
+      <button class="btn-no"    data-value="no"    onclick="answer('no')"   >No</button>
+      <button class="btn-maybe" data-value="maybe" onclick="answer('maybe')">Maybe</button>
+    </div>
+    <div class="feedback-msg" id="feedback"></div>
+  </div>
+  <button class="next-btn" id="next-btn" onclick="nextQuestion()" disabled>Next &rarr;</button>
+</div>
+
+<!-- Results Screen -->
+<div id="results-screen" class="screen">
+  <div class="result-circle" id="result-circle">
+    <span id="result-fraction"></span>
+  </div>
+  <h2>Quiz Complete!</h2>
+  <p id="result-msg"></p>
+  <button class="primary-btn" onclick="startQuiz()">Restart Quiz</button>
+</div>
+
+<script>
+  // ── State ──
+  // answers: filename -> { correct: string[], description: string }
+  let answers = {};
+  let questions = []; // [{file, correct, description}] — 10 selected for this round
+  let current = 0;
+  let score = 0;
+
+  // ── CSV parser that handles RFC-4180 quoted fields ──
+  function parseCSV(text) {
+    const rows = [];
+    const lines = text.trim().split('\n');
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      const fields = [];
+      let i = 0;
+      while (i <= line.length) {
+        if (i === line.length) { fields.push(''); break; }
+        if (line[i] === '"') {
+          // quoted field
+          i++; // skip opening quote
+          let val = '';
+          while (i < line.length) {
+            if (line[i] === '"' && line[i + 1] === '"') { val += '"'; i += 2; }
+            else if (line[i] === '"') { i++; break; }
+            else { val += line[i++]; }
+          }
+          fields.push(val);
+          if (line[i] === ',') i++; // skip separator
+        } else {
+          // unquoted field
+          const comma = line.indexOf(',', i);
+          if (comma === -1) { fields.push(line.slice(i)); break; }
+          fields.push(line.slice(i, comma));
+          i = comma + 1;
+        }
+      }
+      rows.push(fields);
+    }
+    return rows;
+  }
+
+  // ── Boot: load CSV then wait for user ──
+  fetch('app-photos/answers.csv')
+    .then(r => r.text())
+    .then(csv => {
+      const rows = parseCSV(csv);
+      rows.slice(1).forEach(([name, correctStr, description]) => {
+        if (!name || !name.trim()) return;
+        const correct = (correctStr || '')
+          .split(',')
+          .map(s => s.trim().toLowerCase())
+          .filter(Boolean);
+        answers[name.trim()] = { correct, description: (description || '').trim() };
+      });
+    });
+
+  // ── Helpers ──
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function show(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  // ── Quiz flow ──
+  function startQuiz() {
+    current = 0;
+    score   = 0;
+    const pool = Object.keys(answers);
+    questions  = shuffle([...pool]).slice(0, 10).map(f => ({
+      file: f,
+      correct: answers[f].correct,
+      description: answers[f].description,
+    }));
+    show('quiz-screen');
+    renderQuestion();
+  }
+
+  function renderQuestion() {
+    const q = questions[current];
+    document.getElementById('quiz-image').src = 'app-photos/' + q.file;
+    document.getElementById('description').textContent = q.description;
+    document.getElementById('question-counter').textContent =
+      `Question ${current + 1} / ${questions.length}`;
+    document.getElementById('score-display').textContent = score;
+    document.getElementById('progress-bar').style.width =
+      `${(current / questions.length) * 100}%`;
+    document.getElementById('feedback').textContent = '';
+    document.getElementById('feedback').className = 'feedback-msg';
+    document.getElementById('next-btn').disabled = true;
+
+    // reset buttons
+    document.querySelectorAll('.answer-row button').forEach(b => {
+      b.disabled = false;
+      b.className = b.dataset.base;
+    });
+  }
+
+  // store base classes so we can reset
+  document.querySelectorAll('.answer-row button').forEach(b => {
+    b.dataset.base = b.className;
+  });
+
+  function answer(chosen) {
+    const q       = questions[current];
+    const correct = q.correct; // string[]
+    const isRight = correct.includes(chosen);
+    if (isRight) score++;
+
+    const feedback = document.getElementById('feedback');
+    if (isRight) {
+      feedback.textContent = 'Correct!';
+      feedback.className = 'feedback-msg correct';
+    } else {
+      const correctLabels = correct.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(' or ');
+      feedback.textContent = `Not quite — the correct answer${correct.length > 1 ? 's are' : ' is'} "${correctLabels}".`;
+      feedback.className = 'feedback-msg wrong';
+    }
+
+    // highlight buttons
+    document.querySelectorAll('.answer-row button').forEach(b => {
+      b.disabled = true;
+      const val = b.dataset.value;
+      if (val === chosen && isRight)       b.classList.add('btn-correct');
+      if (val === chosen && !isRight)      b.classList.add('btn-wrong');
+      if (correct.includes(val) && !isRight) b.classList.add('btn-reveal');
+    });
+
+    document.getElementById('score-display').textContent = score;
+    document.getElementById('next-btn').disabled = false;
+  }
+
+  function nextQuestion() {
+    current++;
+    if (current >= questions.length) {
+      showResults();
+    } else {
+      renderQuestion();
+    }
+  }
+
+  function showResults() {
+    const total = questions.length;
+    const pct   = Math.round((score / total) * 100);
+
+    document.getElementById('result-circle').style.setProperty('--pct', pct + '%');
+    document.getElementById('result-fraction').textContent = `${score}/${total}`;
+
+    const msgs = [
+      [0,  3,  "Keep exploring — climate attribution is tricky!"],
+      [4,  6,  "Good effort! You're getting the hang of it."],
+      [7,  8,  "Great work — solid understanding of climate impacts."],
+      [9,  10, "Excellent! You're a climate attribution expert."],
+    ];
+    const [,,msg] = msgs.find(([lo, hi]) => score >= lo && score <= hi);
+    document.getElementById('result-msg').textContent = msg;
+
+    show('results-screen');
+  }
+</script>
+</body>
+</html>
