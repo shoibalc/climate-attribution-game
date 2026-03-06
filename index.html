@@ -461,10 +461,10 @@
     document.getElementById('result-fraction').textContent = `${score}/${total}`;
 
     const msgs = [
-      [0,  3,  "Keep exploring — climate attribution is tricky!"],
+      [0,  3,  "Keep exploring — climate change attribution is tricky!"],
       [4,  6,  "Good effort! You're getting the hang of it."],
       [7,  8,  "Great work — solid understanding of climate impacts."],
-      [9,  10, "Excellent! You're a climate attribution expert."],
+      [9,  10, "Excellent! You're a climate change attribution expert."],
     ];
     const [,,msg] = msgs.find(([lo, hi]) => score >= lo && score <= hi);
     document.getElementById('result-msg').textContent = msg;
