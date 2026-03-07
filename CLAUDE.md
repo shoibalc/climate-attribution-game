@@ -30,6 +30,11 @@ Live at: **https://shoibalc.github.io/climate-attribution-game/**
 ```
 app-photos/          # Photos used in the quiz + answer key
   answers.csv        # CSV with columns: name, correct answers, description
+icons/               # PWA icons generated with ImageMagick
+  icon-192.png       # 192×192 home screen icon
+  icon-512.png       # 512×512 splash/install icon
+manifest.json        # PWA manifest (name, theme colour, icons, start URL)
+sw.js                # Service worker — pre-caches all assets for offline use
 My_QR_Code_1-1024.jpeg  # QR code for the GitHub Pages URL
 index.html           # Main (and only) HTML file — all markup, styles, and JS
 README.md            # Project readme with QR code and usage instructions
@@ -43,4 +48,5 @@ CLAUDE.md            # This file
 - **Image paths**: reference images as `app-photos/<filename>` relative to `index.html`.
 - **CSV parsing**: inline JS RFC-4180 parser (no external library); handles quoted fields containing commas.
 - All logic, styles, and markup live in `index.html`.
+- **Offline / PWA**: `sw.js` pre-caches all photos, `answers.csv`, and app shell on first load (cache-first strategy). `answers.csv` is also cached in `localStorage` as a fallback. Icons in `icons/` enable "Add to Home Screen" on mobile and desktop. When adding new photos, update the `ASSETS` array in `sw.js` and bump `CACHE_NAME` to invalidate old caches.
 - **Deployment**: GitHub Pages serves from the `main` branch root. Push to `main` to deploy.
