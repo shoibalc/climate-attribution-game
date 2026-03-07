@@ -23,7 +23,7 @@ Live at: **https://shoibalc.github.io/climate-attribution-game/**
 - Correct answers are defined in `app-photos/answers.csv`; a photo may have multiple correct answers (e.g., `"yes, maybe"`). The player earns a point for picking any correct option.
 - Immediate feedback on answer selection: correct button highlighted green, wrong button highlighted red, and all correct buttons revealed if the player was wrong.
 - Counter tracking correct answers throughout the quiz.
-- Final results screen showing score (with a circular progress indicator), a message keyed to the score range, and a **Restart Quiz** button that returns to the start screen.
+- Final results screen showing score (with a circular progress indicator), a message keyed to the score range, best score (persisted in `localStorage`), and a **Restart Quiz** button that returns to the start screen.
 
 ## File Structure
 
