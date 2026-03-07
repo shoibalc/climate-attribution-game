@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Climate Change Attribution Quiz</title>
+  <link rel="manifest" href="manifest.json" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -302,10 +303,16 @@
   </div>
   <h2>Quiz Complete!</h2>
   <p id="result-msg"></p>
+  <p id="best-score" style="color:#64748b;font-size:0.85rem;"></p>
   <button class="primary-btn" onclick="show('start-screen')">Restart Quiz</button>
 </div>
 
 <script>
+  // ── Service Worker registration ──
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
+
   // ── State ──
   // answers: filename -> { correct: string[], description: string }
   let answers = {};
@@ -347,20 +354,30 @@
     return rows;
   }
 
-  // ── Boot: load CSV then wait for user ──
-  fetch('app-photos/answers.csv')
-    .then(r => r.text())
-    .then(csv => {
-      const rows = parseCSV(csv);
-      rows.slice(1).forEach(([name, correctStr, description]) => {
-        if (!name || !name.trim()) return;
-        const correct = (correctStr || '')
-          .split(',')
-          .map(s => s.trim().toLowerCase())
-          .filter(Boolean);
-        answers[name.trim()] = { correct, description: (description || '').trim() };
-      });
+  // ── Boot: load CSV from localStorage cache or network ──
+  function processCSV(csv) {
+    const rows = parseCSV(csv);
+    rows.slice(1).forEach(([name, correctStr, description]) => {
+      if (!name || !name.trim()) return;
+      const correct = (correctStr || '')
+        .split(',')
+        .map(s => s.trim().toLowerCase())
+        .filter(Boolean);
+      answers[name.trim()] = { correct, description: (description || '').trim() };
     });
+  }
+
+  const cachedCSV = localStorage.getItem('climate-quiz-csv');
+  if (cachedCSV) {
+    processCSV(cachedCSV);
+  } else {
+    fetch('app-photos/answers.csv')
+      .then(r => r.text())
+      .then(csv => {
+        try { localStorage.setItem('climate-quiz-csv', csv); } catch (e) {}
+        processCSV(csv);
+      });
+  }
 
   // ── Helpers ──
   function shuffle(arr) {
@@ -468,6 +485,13 @@
     ];
     const [,,msg] = msgs.find(([lo, hi]) => score >= lo && score <= hi);
     document.getElementById('result-msg').textContent = msg;
+
+    // Update and display best score in localStorage
+    const prev = parseInt(localStorage.getItem('climate-quiz-best') || '0', 10);
+    const best = Math.max(score, prev);
+    try { localStorage.setItem('climate-quiz-best', best); } catch (e) {}
+    document.getElementById('best-score').textContent =
+      best > 0 ? `Best score: ${best} / ${total}` : '';
 
     show('results-screen');
   }
