@@ -5,6 +5,8 @@ const ASSETS = [
   './index.html',
   './manifest.json',
   './app-photos/answers.csv',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
   './app-photos/mall_flood.jpg',
   './app-photos/outdoor%20pollution_traffic.jpg',
   './app-photos/crop%20burning.jpg',
